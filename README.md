@@ -165,7 +165,6 @@ Summary: the structure-based test supports carbamazepine and clarithromycin, doe
 - [ ] Test whether the MS1 mass-error model transfers to MS2 fragments (fit a separate MS2 model) before tightening the fragment tolerance
 - [ ] Check EICs for fexofenadine at Worms/Bimmen and for the 18 Worms features
 - [ ] Test whether the Bimmen-only ethoxylate series could be carry-over (needs the injection order)
-- [ ] Remove the "paste this over the cell" comments; merge the strict homologous-series cell into the main flow
 - [ ] Replace global variables such as `a`, `b` (mass-error model) and `diffs` with explicit parameters
 - [ ] Test isotope patterns (M+1/M) against the suspect formulas to support or reject level 4
 - [ ] Verify the SMILES against PubChem (for example with PubChemPy)
