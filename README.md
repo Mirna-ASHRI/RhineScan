@@ -119,7 +119,6 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 - [ ] Apply the mass-error correction to MS2 fragments and tighten the fragment tolerance from 10 ppm to about 5 ppm
 - [ ] Check EICs for fexofenadine at Worms/Bimmen and for the 18 Worms features
 - [ ] Test whether the Bimmen-only ethoxylate series could be carry-over (needs the injection order)
-- [ ] Remove the "paste this over the cell" comments; merge the strict homologous-series cell into the main flow
 - [ ] Replace global variables such as `a`, `b` (mass-error model) and `diffs` with explicit parameters
 - [ ] MetFrag + PubChemLite on `tier1_ms2.mgf`; matchms against MassBank
 - [ ] Process the paired negative-mode file (diclofenac, sulfamethoxazole, and so on)
