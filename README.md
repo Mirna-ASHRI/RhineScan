@@ -134,3 +134,9 @@ The source code in this repository is released under the
 The LC-HRMS dataset is not covered by this licence.
 Please refer to the original [Zenodo record](https://zenodo.org/records/17591915)
 for its data licensing and reuse conditions.
+
+
+
+## Acknowledgements
+
+Claude (Anthropic) was used as an AI coding assistant during the development of this project.
