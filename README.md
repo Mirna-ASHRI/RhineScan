@@ -75,32 +75,6 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 
 ---
 
-## How to reproduce
-
-### On Kaggle (as developed)
-
-1. Create a notebook with internet enabled and upload `rhine_pnta.ipynb`.
-2. Run all cells top to bottom (`Save Version > Save & Run All` so outputs persist).
-3. First run: about 20 min download, then a few minutes for extraction, requantification and plotting.
-
-### Locally
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install pyopenms numpy pandas scipy scikit-learn matplotlib requests jupyter
-jupyter lab rhine_pnta.ipynb
-```
-
-Outside Kaggle the notebook falls back to `./work/` for data and results. You need about 5 GB of free disk space (zip plus extracted mzXML).
-
-> Pin your versions. The code was verified on **pyOpenMS 3.6**; the exact version is written to `run_params.json` on every run. A `requirements.txt` with pinned versions is recommended (see TODO).
-
-### Caching behaviour (read this before changing parameters)
-
-Per-sample features (`features/*.csv.gz`, `*_ms2.pkl`) and the requantified matrix (`requantified_matrix.csv.gz`) are cached and **not** keyed to parameters. If you change `NOISE_QUANTILE`, `MASS_ERR_PPM`, `EIC_PPM` or similar, delete `wastewater_watch_results/features/` and `requantified_matrix.csv.gz` first, otherwise stale results will be reused silently.
-
----
-
 ## Outputs (`wastewater_watch_results/`)
 
 | File | Content |
