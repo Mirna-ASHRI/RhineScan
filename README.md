@@ -1,4 +1,4 @@
-# RhineScan: prioritised non-target screening (pNTA) along the Rhine
+# Prioritised non-target screening (pNTA) along the Rhine (RhineScan)
 
 An end-to-end, notebook-based workflow that takes raw LC-HRMS data (positive mode) from eight Rhine sampling sites and four procedural blanks, removes laboratory background, and ranks the remaining chemical features by how interesting they are as early-warning candidates: do they appear suddenly, increase downstream, have MS2 data, or match known pollutants?
 
