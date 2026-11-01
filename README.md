@@ -129,4 +129,9 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 
 ## Licence
 
-`<choose a licence for the code>`. Data licence: see the Zenodo record.
+The source code in this repository is released under the
+[MIT License](LICENSE).
+
+The LC-HRMS dataset is not covered by this licence.
+Please refer to the original [Zenodo record](https://zenodo.org/records/17591915)
+for its data licensing and reuse conditions.
