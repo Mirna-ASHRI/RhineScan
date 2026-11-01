@@ -1,4 +1,4 @@
-# RhineScan: prioritised non-target screening as an early-warning proxy
+# Prioritised non-target screening as an early-warning proxy (RhineScan)
 
 Retrospective prioritised non-target analysis (pNTA) of LC-HRMS/MS data (positive ESI) from eight sites along the
 Rhine (upstream to downstream: Weil, Karlsruhe, Worms, Koblenz, Bad Honnef, Duesseldorf, Duisburg, Bimmen) plus four
@@ -33,8 +33,9 @@ them here.** The data are not stored in this repository.
     background (group-aware CV, noise stress test), then used to rank real features; ML-ready tables exported.
     The simulation measures detector sensitivity only; it is not evidence of real events.
     Result: modest extra sensitivity over the jump rule for 8-16-fold events and no overall AUC gain; the
-    top-ranked features appear to form two source-like groups (Worms, Duisburg), which a clustering cell
-    quantifies. An earlier simulator produced a spurious advantage and was corrected (see the notes).
+    top 30 ranked features collapse into four profile clusters (19 share a step at Worms, 7 a late-eluting
+    spike at Duisburg), i.e. roughly two source-like signals rather than 30 independent events. An earlier
+    simulator produced a spurious advantage and was corrected (see the notes).
 
 ## Identification confidence
 
