@@ -10,15 +10,12 @@ An end-to-end, notebook-based workflow that takes raw LC-HRMS data (positive mod
 
 | | |
 |---|---|
-| Source | Zenodo record [`17591915`](https://zenodo.org/records/17591915), file `P1_pos.zip` (about 1.8 GB) |
+| Source | Zenodo record [`17591915`](https://zenodo.org/records/17591915) *, file `P1_pos.zip` (about 1.8 GB) |
 | Content | 12 `.mzXML` files, positive ESI: 8 river samples + 4 blanks (`MQ_1` to `MQ_4`) |
 | Sites (upstream to downstream) | Weil, Karlsruhe, Worms, Koblenz, Bad Honnef, Duesseldorf, Duisburg, Bimmen |
 | Integrity | The notebook downloads the file and verifies the Zenodo checksum before extracting |
 
-Please cite the Zenodo record and its authors when using this data: `<add citation and licence from the Zenodo page>`.
-
-Note: the sample-name mapping in the notebook contains `karlsruhuhe`. This deliberately matches the spelling of the file name in the dataset. Do not "fix" it unless the upstream file name changes.
-
+Zenodo reference:  10.5281/zenodo.17591914.
 ---
 
 ## Pipeline
