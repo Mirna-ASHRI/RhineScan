@@ -20,29 +20,19 @@ Zenodo reference:  10.5281/zenodo.17591914.
 
 ## Pipeline
 
-| # | Step | What it does | Key parameters |
-|---|---|---|---|
-| 1 | Download and verify | Fetches the zip from Zenodo, checks the checksum, extracts | `RECORD_ID`, `FILENAME` |
-| 2 | Noise tuning | Picks an MS1 intensity threshold from the intensity distribution of the first file | `NOISE_QUANTILE = 0.70` |
-| 3 | Feature detection | pyOpenMS mass-trace detection, elution-peak detection and feature finding; MS2 spectra (top 60 peaks) are cached | `MASS_ERR_PPM = 5`, `min_trace_length = 4` |
-| 4 | Cross-sample grouping | Intensity-seeded clustering of features across files (no RT alignment) | `PPM_TOL = 5`, `RT_TOL = 15 s` |
-| 5 | Requantification (gap filling) | Re-measures every feature group in every raw file as an EIC, so "0" means "not detected" | LOD = 5 x noise, apex >= 3 x local median, >= 3 scans |
-| 6 | Blank filter | Sample signal must exceed 10 x the maximum blank signal and the feature must be seen at >= 2 sites | `BLANK_FOLD = 10`, `MIN_SITES = 2` |
-| 7 | Drift normalisation | Per-site log2 offset estimated from "core" features detected at all sites | 235 core features |
-| 8 | Spatial dynamics | Spearman rank vs river position (`rho`) and a "jump" metric (site vs median of all upstream sites) | non-detects set to LOD |
-| 9 | Deduplication | Merges 13C isotopes and NH4/Na/K adducts if profiles correlate; drops RT < 2.5 min (solvent front) | `min_corr = 0.7` |
-| 10 | Mass-error model | Fits a linear ppm-vs-m/z error from anchor suspects and corrects all m/z values | residual MAD 0.59 ppm |
-| 11 | Suspect screening | [M+H]+ match against 29 suspects within 3 ppm of the corrected mass (Schymanski level 5) | `SUSPECT_PPM = 3` |
-| 12 | MS2 fragment check | Diagnostic fragment ions for carbamazepine, metoprolol and clarithromycin (tentative level 3) | 10 ppm, >= 5% base peak |
-| 13 | Priority score | Weighted sum of intensity, detection frequency, MS2 presence, dynamics and suspect match | weights `W` in the notebook |
-| 14 | Homologous series | Strict search for C2H4O / C3H6O repeat-unit series plus an MS2 ladder check against a control set | >= 4 consecutive units, RT step <= 20 s |
-| 15 | Export | Priority table, suspect hits, MS2 fragment check, event-like lists, Tier-1 MGF, run parameters | |
-| 16 | RDKit: structures | SMILES for the 11 suspect hits; RDKit recomputes formula and [M+H]+ and checks them against the suspect list; logP, TPSA, H-bond donors, rotatable bonds | formula check is an assertion |
-| 17 | RDKit: RT plausibility | Observed RT vs calculated logP (reversed-phase retention), outliers flagged | \|z\| > 1.5 |
-| 18 | RDKit: in-silico MS2 | Every acyclic single bond of the structure is cut; pieces are converted to ions (-1..+2 H) and matched to the measured MS2 peaks; a decoy test scores each spectrum against all structures | 7 ppm, peaks >= 5% of base peak, median over all linked spectra |
-| 19 | Summary figures | Pipeline funnel, downstream effect sizes, structural similarity (Tanimoto), evidence matrix | |
-
-The priority score only rewards signals that **increase downstream** or **appear suddenly**; features that decrease downstream score zero on the dynamics term.
+1. Download, checksum verification, sample labelling by river order
+2. Data-driven noise threshold, pyOpenMS feature detection (m/z, RT, intensity), MS2 spectra retained
+3. Cross-sample feature grouping, then re-quantification from raw data so that 0 means "not detected"
+4. Blank filter (10x), intensity-drift normalisation on core features, isotope/adduct merging, solvent-front removal
+5. Downstream trend (Spearman, with exact permutation p-values and Benjamini-Hochberg FDR) and jump size
+6. Mass-error recalibration (leave-one-out error reported), suspect screening of 29 compounds by exact mass,
+   MS2 fragment check
+7. Priority score and tiers
+8. Homologous-series detection (EO/PO units) with MS2 ladder test against a control; independence check of the
+   Worms signals
+9. Structure checks: RDKit formula validation, PubChem verification of SMILES (PubChemPy), in-silico fragmentation
+   with a decoy test
+10. Optional library matching (matchms + MassBank), exports (tables, MGF for MetFrag/matchms, run parameters)
 
 ---
 
@@ -74,20 +64,13 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 * 8 strict ethoxylate-type series (48 features). Their MS2 spectra show C2H4O ladders in 59 to 100% of spectra per series, against 34.6% in non-series control features.
 * The 18 "Worms" features show Worms/downstream ratios from 2.3x to 10.7x. This could be real, but a single-sample effect cannot be excluded.
 
-### Identification confidence (Schymanski levels)
+## Identification confidence
  
-Levels follow Schymanski et al. (2014), *Environ. Sci. Technol.* 48, 2097. The rules are applied explicitly in the notebook (`suspect_confidence_levels.csv`) and are deliberately conservative.
- 
-| Level | Meaning | Used here? |
-|---|---|---|
-| 5 | Exact mass of interest | All 547 prioritised features and all suspects matched on m/z alone (8 of 11 suspects) |
-| 4 | Unequivocal molecular formula | **Not claimed.** Needs isotope pattern / adduct evidence tested against the formula (planned) |
-| 3 | Tentative candidate (structure, substructure or class) | Carbamazepine, metoprolol, clarithromycin: diagnostic MS2 fragments found. In-silico MS2 is strong for carbamazepine and clarithromycin and weak for metoprolol |
-| 2a / 2b | Probable structure (library match / diagnostic evidence) | **Not claimed.** Needs a library spectrum (e.g. MassBank) or evidence that excludes other structures |
-| 1 | Confirmed with reference standard (MS, MS2 and RT) | **Not claimed** |
- 
-Rules: in-silico fragmentation supports level 3 but never raises it; retention time vs logP is a plausibility check only; tramadol has two candidate features (isomers or duplicates), so it stays at level 5 and is ambiguous even there; venlafaxine and tramadol MS2 match only a shared amine fragment and are not upgraded. The ethoxylate-type series are class-level evidence at best (level 3 for the class, level 5 for individual members), and PEG-type signals are common lab and consumable contaminants, so they remain putative.
- 
+Levels follow Schymanski et al. 2014 (Environ. Sci. Technol. 48, 2097-2098). Nothing here is level 1 or 2 unless the
+optional MassBank step passes **and** the mirror plot is checked by a person. MS1 accurate-mass suspect matches are
+level 5. Level 4 is not claimed because isotope-pattern/adduct evidence is not evaluated. Level 3 means curated
+diagnostic fragments were found in measured MS2; it is a tentative candidate, not an identification.
+
 ### Structure-based checks (RDKit)
  
 | Check | Result |
@@ -157,21 +140,10 @@ Summary: the structure-based test supports carbamazepine and clarithromycin, doe
 
 ---
 
-## TODO / next steps
-
-- [ ] Add `requirements.txt` / `environment.yml` with pinned versions
-- [ ] Key caches to a hash of the parameters
-- [ ] Add a minimum effect size (for example >= 2x downstream/upstream) to the dynamics term; add FDR-aware ranking
-- [ ] Test whether the MS1 mass-error model transfers to MS2 fragments (fit a separate MS2 model) before tightening the fragment tolerance
-- [ ] Check EICs for fexofenadine at Worms/Bimmen and for the 18 Worms features
-- [ ] Test whether the Bimmen-only ethoxylate series could be carry-over (needs the injection order)
-- [ ] Replace global variables such as `a`, `b` (mass-error model) and `diffs` with explicit parameters
-- [ ] Test isotope patterns (M+1/M) against the suspect formulas to support or reject level 4
-- [ ] Verify the SMILES against PubChem (for example with PubChemPy)
-- [ ] Add ring-opening fragmentation and neutral losses (H2O, NH3, CO2) to the in-silico MS2 test, or use MetFrag / CFM-ID
-- [ ] MetFrag + PubChemLite on `tier1_ms2.mgf`; matchms against MassBank
-- [ ] Process the paired negative-mode file (diclofenac, sulfamethoxazole, and so on)
-- [ ] Split the notebook into a small package (`src/`) plus a config file; add a smoke test on one file
+## Next steps
+ 
+MetFrag + PubChemLite on `tier1_ms2_v2.mgf`; matchms against MassBank; paired negative-mode file; isotope-pattern
+check (level 4); QC injections / true time series; ML-ready feature tables for downstream modelling.
 
 ---
 
