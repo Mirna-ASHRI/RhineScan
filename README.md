@@ -37,6 +37,10 @@ Zenodo reference:  10.5281/zenodo.17591914.
 | 13 | Priority score | Weighted sum of intensity, detection frequency, MS2 presence, dynamics and suspect match | weights `W` in the notebook |
 | 14 | Homologous series | Strict search for C2H4O / C3H6O repeat-unit series plus an MS2 ladder check against a control set | >= 4 consecutive units, RT step <= 20 s |
 | 15 | Export | Priority table, suspect hits, MS2 fragment check, event-like lists, Tier-1 MGF, run parameters | |
+| 16 | RDKit: structures | SMILES for the 11 suspect hits; RDKit recomputes formula and [M+H]+ and checks them against the suspect list; logP, TPSA, H-bond donors, rotatable bonds | formula check is an assertion |
+| 17 | RDKit: RT plausibility | Observed RT vs calculated logP (reversed-phase retention), outliers flagged | \|z\| > 1.5 |
+| 18 | RDKit: in-silico MS2 | Every acyclic single bond of the structure is cut; pieces are converted to ions (-1..+2 H) and matched to the measured MS2 peaks; a decoy test scores each spectrum against all structures | 7 ppm, peaks >= 5% of base peak, median over all linked spectra |
+| 19 | Summary figures | Pipeline funnel, downstream effect sizes, structural similarity (Tanimoto), evidence matrix | |
 
 The priority score only rewards signals that **increase downstream** or **appear suddenly**; features that decrease downstream score zero on the dynamics term.
 
@@ -61,7 +65,7 @@ Feature funnel: 9,053 feature groups, then 2,028 after requantification, 613 aft
 | Citalopram | 325.1712 | 8.15 | 0.5 | 8 | -0.17 | Flat, non-monotonic profile |
 | Clarithromycin | 748.4837 | 9.23 | -0.7 | 8 | 0.81 | MS2 fragment found (tentative level 3) |
 | Fexofenadine | 502.2950 | 9.00 | -0.4 | 6 | 0.23 | Not detected at Worms and Bimmen; needs EIC check |
-
+ 
 Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ response, elution in the solvent front, or below the detection limit). The sitagliptin "feature" (16 min) is a spurious exact-mass match and was removed by the blank/site filters.
 
 ### Event-like features and series
@@ -69,6 +73,46 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 * 44 features jump at least 16x with persistence >= 80% and MS2; 25 remain after excluding jumps at the last site (Worms: 18, Duisburg: 7).
 * 8 strict ethoxylate-type series (48 features). Their MS2 spectra show C2H4O ladders in 59 to 100% of spectra per series, against 34.6% in non-series control features.
 * The 18 "Worms" features show Worms/downstream ratios from 2.3x to 10.7x. This could be real, but a single-sample effect cannot be excluded.
+
+### Identification confidence (Schymanski levels)
+ 
+Levels follow Schymanski et al. (2014), *Environ. Sci. Technol.* 48, 2097. The rules are applied explicitly in the notebook (`suspect_confidence_levels.csv`) and are deliberately conservative.
+ 
+| Level | Meaning | Used here? |
+|---|---|---|
+| 5 | Exact mass of interest | All 547 prioritised features and all suspects matched on m/z alone (8 of 11 suspects) |
+| 4 | Unequivocal molecular formula | **Not claimed.** Needs isotope pattern / adduct evidence tested against the formula (planned) |
+| 3 | Tentative candidate (structure, substructure or class) | Carbamazepine, metoprolol, clarithromycin: diagnostic MS2 fragments found. In-silico MS2 is strong for carbamazepine and clarithromycin and weak for metoprolol |
+| 2a / 2b | Probable structure (library match / diagnostic evidence) | **Not claimed.** Needs a library spectrum (e.g. MassBank) or evidence that excludes other structures |
+| 1 | Confirmed with reference standard (MS, MS2 and RT) | **Not claimed** |
+ 
+Rules: in-silico fragmentation supports level 3 but never raises it; retention time vs logP is a plausibility check only; tramadol has two candidate features (isomers or duplicates), so it stays at level 5 and is ambiguous even there; venlafaxine and tramadol MS2 match only a shared amine fragment and are not upgraded. The ethoxylate-type series are class-level evidence at best (level 3 for the class, level 5 for individual members), and PEG-type signals are common lab and consumable contaminants, so they remain putative.
+ 
+### Structure-based checks (RDKit)
+ 
+| Check | Result |
+|---|---|
+| Formula / [M+H]+ from SMILES vs suspect list | All 11 structures consistent (difference 0.000 mDa) |
+| RT vs logP | Loose relationship; valsartan (+2.6 min) and clarithromycin (+2.0 min) elute later than predicted, most likely a limit of Crippen logP for ionisable acids and large macrolides (not tested further) |
+| In-silico MS2, carbamazepine | 55% of MS2 intensity explained (median over 10 spectra); no decoy competes |
+| In-silico MS2, clarithromycin | 40% explained (desosamine fragment m/z 158.118, +1.9 ppm); no decoy competes |
+| In-silico MS2, tramadol / venlafaxine | 58% / 31% explained but **tied** with each other and with other dimethylamino/amine drugs (a shared low-mass amine fragment, likely C3H8N+ m/z 58.065, matches all) |
+| In-silico MS2, metoprolol | Side-chain fragment (m/z 116.107) found, but only 2% of intensity explained: most of its signal needs rearrangements that single-bond cuts cannot produce |
+| In-silico MS2, sartans, lamotrigine, citalopram, fexofenadine | < 10% explained (median); expected for ring-based fragmentation, which is not modelled; this is **not** evidence against these identifications |
+| Benzotriazole | Not testable (only ring bonds) |
+ 
+Summary: the structure-based test supports carbamazepine and clarithromycin, does not contradict any other assignment, and cannot discriminate structurally similar amines on low-mass fragments. A decoy score below about 0.05 is at the chance level. The evidence-matrix figure (`fig12`) collects all lines of evidence per suspect; its thresholds are heuristic and for communication only, not a statistical confidence score.
+ 
+### Key figures
+ 
+| | |
+|---|---|
+| Pipeline funnel | `docs/fig9_pipeline_funnel.png` |
+| Suspect effect sizes (downstream vs upstream) | `docs/fig10_suspect_effect_sizes.png` |
+| Structural similarity of the suspects | `docs/fig11_suspect_similarity.png` |
+| Evidence matrix | `docs/fig12_evidence_matrix.png` |
+ 
+![Evidence matrix](docs/fig12_evidence_matrix.png)
 
 ---
 
@@ -103,9 +147,11 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 
 * **Spatial gradient is not a time series.** It supports method development, not a validated early-warning claim.
 * **One injection per site, no replicates, no pooled QC injections.** Rankings have no uncertainty estimates, and run-to-run drift cannot be fully separated from real gradients when run order equals river order. The normalisation offsets (-0.32 at Weil to +0.20 at Duisburg) follow river order, so the normalisation may remove part of a real gradient.
-* **Identification confidence is low.** Suspects are level 5 (exact mass) unless the MS2 fragment check applies (tentative level 3, fragments from the literature that still need to be verified in MassBank). Levels 2 and 1 require library spectra or reference standards.
+* **Identification confidence is low.** 8 of 11 suspects are level 5 (exact mass only) and 3 are level 3 (diagnostic fragments, taken from the literature and still to be verified in MassBank). No level 4 is claimed because isotope patterns were not tested against the formulas; level 2 needs a library match and level 1 a reference standard with retention time.
 * **Sensitivity is modest.** About 900 to 1,500 features per sample at the chosen threshold (the notebook's own target was 2,000 to 8,000), and several common wastewater markers are not found.
 * **Score design.** The dynamics term uses rank correlation, so a statistically monotonic but tiny increase (for example carbamazepine, about 0.2 log2 units) scores like a large one. Weights are expert-set, not fitted.
+* **In-silico MS2 is a minimal test.** Only acyclic single bonds are cut, with no ring opening and no multi-step fragmentation, so ring-rich molecules score low and the result is a lower bound. Hydrogen shifts (-1 to +2 H) give each piece several chances to match, so the decoy test is needed to judge any score. SMILES were entered by hand (flat, no stereochemistry) and must be verified against PubChem.
+* **MS2 mass accuracy.** After the MS1 mass-error correction, carbamazepine fragments sit at +2.6 to +4.3 ppm, so the MS1 model may not transfer to fragments; a 7 ppm window is used for MS2.
 * **Hotspot explanations** (Worms, Mosel, Ruhr, and so on) are hypotheses, not findings.
 * Report the sensitivity of the results to `NOISE_QUANTILE`, the blank choice and the score weights.
 
@@ -116,10 +162,14 @@ Not found: diclofenac, caffeine, gabapentin, sulfamethoxazole (poor ESI+ respons
 - [ ] Add `requirements.txt` / `environment.yml` with pinned versions
 - [ ] Key caches to a hash of the parameters
 - [ ] Add a minimum effect size (for example >= 2x downstream/upstream) to the dynamics term; add FDR-aware ranking
-- [ ] Apply the mass-error correction to MS2 fragments and tighten the fragment tolerance from 10 ppm to about 5 ppm
+- [ ] Test whether the MS1 mass-error model transfers to MS2 fragments (fit a separate MS2 model) before tightening the fragment tolerance
 - [ ] Check EICs for fexofenadine at Worms/Bimmen and for the 18 Worms features
 - [ ] Test whether the Bimmen-only ethoxylate series could be carry-over (needs the injection order)
+- [ ] Remove the "paste this over the cell" comments; merge the strict homologous-series cell into the main flow
 - [ ] Replace global variables such as `a`, `b` (mass-error model) and `diffs` with explicit parameters
+- [ ] Test isotope patterns (M+1/M) against the suspect formulas to support or reject level 4
+- [ ] Verify the SMILES against PubChem (for example with PubChemPy)
+- [ ] Add ring-opening fragmentation and neutral losses (H2O, NH3, CO2) to the in-silico MS2 test, or use MetFrag / CFM-ID
 - [ ] MetFrag + PubChemLite on `tier1_ms2.mgf`; matchms against MassBank
 - [ ] Process the paired negative-mode file (diclofenac, sulfamethoxazole, and so on)
 - [ ] Split the notebook into a small package (`src/`) plus a config file; add a smoke test on one file
