@@ -61,16 +61,6 @@ level 5. A library match with the same compound name (cosine >= 0.7, >= 4 peaks)
 level 2a only after a person has checked the mirror plot. Isomer ambiguity keeps a suspect at level 3. Level 4 is not
 claimed (isotope-pattern/adduct evidence not evaluated) and level 1 is not possible (no reference standards).
  
-## Reproducing
- 
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-jupyter lab rhinescan.ipynb     # Restart kernel and run all cells; the first run downloads the data (~20 min)
-```
- 
-Pin the pyOpenMS version printed in `run_params.json`; its API has changed between releases.
- 
 ## Limitations
  
 - Spatial gradient is not a time series; tributary and matrix effects cannot be separated from temporal dynamics.
