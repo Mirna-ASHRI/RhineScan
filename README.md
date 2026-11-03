@@ -12,7 +12,7 @@ a unit that flags a sudden chemical release.
  
 | File | Purpose |
 |---|---|
-| `rhinescan.ipynb` | The full pipeline with outputs (run top to bottom) |
+| `RhineScan-pNTA-env-chemoinformatics.ipynb` | The full pipeline with outputs (run top to bottom) |
 | `RhineScan_one_page_summary.docx` | One-page project summary |
 | `requirements.txt` | Python packages |
 | `LICENSE` | Licence of the code |
