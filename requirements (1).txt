@@ -1,0 +1,11 @@
+numpy
+pandas
+scipy>=1.11
+matplotlib
+scikit-learn
+requests
+pyopenms
+rdkit
+pubchempy
+matchms
+jupyterlab
